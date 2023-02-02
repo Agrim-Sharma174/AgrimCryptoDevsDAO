@@ -16,21 +16,8 @@ WALLET_PRIVATE_KEY="e17ubj82ybe......"
 
 */
 
-const config = {
+module.exports = {
   solidity: "0.8.9",
-  defaultNetwork: "goerli",
-  networks: {
-    mumbai: {
-      url: process.env.ALCHEMY_API_KEY_URL,
-      accounts: [process.env.WALLET_PRIVATE_KEY],
-    },
-  },
-  //* Uncomment the follow lines for verfication process
-  // etherscan: {
-  //   apiKey: {
-  //     polygonMumbai: process.env.SCAN_KEY,
-  //   },
-  // },
 };
 
-export default config;
+module.exports;
