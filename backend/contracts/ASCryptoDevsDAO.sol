@@ -34,28 +34,42 @@ interface ICryptoDevsNFT {
     /// @param owner - address to fetch the NFT TokenID for
     /// @param index - index of NFT in owned tokens array to fetch
     /// @return Returns the TokenID of the NFT
-    function tokenOfOwnerByIndex(address owner, uint256 index)
-        external
-        view
-        returns (uint256);
+    function tokenOfOwnerByIndex(
+        address owner,
+        uint256 index
+    ) external view returns (uint256);
 }
 
 contract ASCryptoDevsDAO is Ownable {
+    IFakeNFTMarketplace nftMarketplace;
+    ICryptoDevsNFT cryptoDevsNFT;
 
     // Create a struct named Proposal containing all relevant information
-struct Proposal {
-    // nftTokenId - the tokenID of the NFT to purchase from FakeNFTMarketplace if the proposal passes
-    uint256 nftTokenId;
-    // deadline - the UNIX timestamp until which this proposal is active. Proposal can be executed after the deadline has been exceeded.
-    uint256 deadline;
-    // yayVotes - number of yay votes for this proposal
-    uint256 yayVotes;
-    // nayVotes - number of nay votes for this proposal
-    uint256 nayVotes;
-    // executed - whether or not this proposal has been executed yet. Cannot be executed before the deadline has been exceeded.
-    bool executed;
-    // voters - a mapping of CryptoDevsNFT tokenIDs to booleans indicating whether that NFT has already been used to cast a vote or not
-    mapping(uint256 => bool) voters;
-}
+    struct Proposal {
+        uint256 nftTokenId; // nftTokenId - the tokenID of the NFT to purchase from FakeNFTMarketplace if the proposal passes
+        uint256 deadline; // deadline - the UNIX timestamp until which this proposal is active. Proposal can be executed after the deadline has been exceeded.
+        uint256 yayVotes; // yayVotes - number of yay votes for this proposal
+        uint256 nayVotes; // nayVotes - number of nay votes for this proposal
+        bool executed; // executed - whether or not this proposal has been executed yet. Cannot be executed before the deadline has been exceeded.
+        mapping(uint256 => bool) voters; // voters - a mapping of CryptoDevsNFT tokenIDs to booleans indicating whether that NFT has already been used to cast a vote or not
+    }
+
+    mapping(uint256 => Proposal) public proposals;
+    uint256 public proposalCount;
+
+    // Create a payable constructor which initializes the contract
+    // instances for FakeNFTMarketplace and CryptoDevsNFT
+    // The payable allows this constructor to accept an ETH deposit when it is being deployed
+    constructor(address _nftMarketplace, address _cryptoDevsNFT) payable {
+        nftMarketplace = IFakeNFTMarketplace(_nftMarketplace);
+        cryptoDevsNFT = ICryptoDevsNFT(_cryptoDevsNFT);
+    }
+
+    modifier nftHolderOnly() {
+        require(cryptoDevsNFT.balanceOf(msg.sender) > 0, "Not a DAO member");
+        _;
+    }
+
+
 
 }
