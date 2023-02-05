@@ -21,10 +21,10 @@ interface IFakeNFTMarketplace {
 }
 
 /**
- * Minimal interface for CryptoDevsNFT containing only two functions
+ * Minimal interface for ASCryptoDevsNFT containing only two functions
  * that we are interested in
  */
-interface ICryptoDevsNFT {
+interface IASCryptoDevsNFT {
     /// @dev balanceOf returns the number of NFTs owned by the given address
     /// @param owner - address to fetch number of NFTs for
     /// @return Returns the number of NFTs owned
@@ -42,7 +42,7 @@ interface ICryptoDevsNFT {
 
 contract ASCryptoDevsDAO is Ownable {
     IFakeNFTMarketplace nftMarketplace;
-    ICryptoDevsNFT cryptoDevsNFT;
+    IASCryptoDevsNFT ASCryptoDevsNFT;
 
     // Create a struct named Proposal containing all relevant information
     struct Proposal {
@@ -51,7 +51,7 @@ contract ASCryptoDevsDAO is Ownable {
         uint256 yayVotes; // yayVotes - number of yay votes for this proposal
         uint256 nayVotes; // nayVotes - number of nay votes for this proposal
         bool executed; // executed - whether or not this proposal has been executed yet. Cannot be executed before the deadline has been exceeded.
-        mapping(uint256 => bool) voters; // voters - a mapping of CryptoDevsNFT tokenIDs to booleans indicating whether that NFT has already been used to cast a vote or not
+        mapping(uint256 => bool) voters; // voters - a mapping of ASCryptoDevsNFT tokenIDs to booleans indicating whether that NFT has already been used to cast a vote or not
     }
 
     // Create a mapping of ID to Proposal
@@ -60,21 +60,21 @@ contract ASCryptoDevsDAO is Ownable {
     uint256 public numProposals;
 
     // Create a payable constructor which initializes the contract
-    // instances for FakeNFTMarketplace and CryptoDevsNFT
+    // instances for FakeNFTMarketplace and ASCryptoDevsNFT
     // The payable allows this constructor to accept an ETH deposit when it is being deployed
-    constructor(address _nftMarketplace, address _cryptoDevsNFT) payable {
+    constructor(address _nftMarketplace, address _ASCryptoDevsNFT) payable {
         nftMarketplace = IFakeNFTMarketplace(_nftMarketplace);
-        cryptoDevsNFT = ICryptoDevsNFT(_cryptoDevsNFT);
+        ASCryptoDevsNFT = IASCryptoDevsNFT(_ASCryptoDevsNFT);
     }
 
     // Create a modifier which only allows a function to be
-    // called by someone who owns at least 1 CryptoDevsNFT
+    // called by someone who owns at least 1 ASCryptoDevsNFT
     modifier nftHolderOnly() {
-        require(cryptoDevsNFT.balanceOf(msg.sender) > 0, "Not a DAO member");
+        require(ASCryptoDevsNFT.balanceOf(msg.sender) > 0, "Not a DAO member");
         _;
     }
 
-    /// @dev createProposal allows a CryptoDevsNFT holder to create a new proposal in the DAO
+    /// @dev createProposal allows a ASCryptoDevsNFT holder to create a new proposal in the DAO
     /// _nftTokenId - the tokenID of the NFT to be purchased from FakeNFTMarketplace if this proposal passes
     /// @return Returns the proposal index for the newly created proposal
     function createProposal(
@@ -89,5 +89,69 @@ contract ASCryptoDevsDAO is Ownable {
         numProposals++;
 
         return numProposals - 1;
+    }
+
+    // Create a modifier which only allows a function to be
+    // called if the given proposal's deadline has not been exceeded yet
+    modifier activeProposalOnly(uint256 proposalIndex) {
+        require(
+            proposals[proposalIndex].deadline > block.timestamp,
+            "deadline exceeded"
+        );
+        _;
+    }
+
+    // Create an enum named Vote containing possible options for a vote
+    enum Vote {
+        YAY,
+        NAY
+    }
+
+    /// @dev voteOnProposal allows a ASCryptoDevsNFT holder to cast their vote on an active proposal
+    /// @param proposalIndex - the index of the proposal to vote on in the proposals array
+    /// @param vote - the type of vote they want to cast
+    function voteOnProposal(
+        uint256 proposalIndex,
+        Vote vote
+    ) external nftHolderOnly activeProposalOnly(proposalIndex) {
+        Proposal storage proposal = proposals[proposalIndex];
+
+        uint256 voterNFTBalance = ASCryptoDevsNFT.balanceOf(msg.sender);
+        uint256 numVotes = 0;
+
+        // Calculate how many NFTs are owned by the voter
+        // that haven't already been used for voting on this proposal
+        for (uint256 i = 0; i < voterNFTBalance; i++) {
+            uint256 tokenId = ASCryptoDevsNFT.tokenOfOwnerByIndex(
+                msg.sender,
+                i
+            );
+            if (proposal.voters[tokenId] == false) {
+                numVotes++;
+                proposal.voters[tokenId] = true;
+            }
+        }
+        require(numVotes > 0, "ALREADY_VOTED");
+
+        if (vote == Vote.YAY) {
+            proposal.yayVotes += numVotes;
+        } else {
+            proposal.nayVotes += numVotes;
+        }
+    }
+
+    // Create a modifier which only allows a function to be
+    // called if the given proposals' deadline HAS been exceeded
+    // and if the proposal has not yet been executed
+    modifier inactiveProposalOnly(uint256 proposalIndex) {
+        require(
+            proposals[proposalIndex].deadline <= block.timestamp,
+            "DEADLINE_NOT_EXCEEDED"
+        );
+        require(
+            proposals[proposalIndex].executed == false,
+            "PROPOSAL_ALREADY_EXECUTED"
+        );
+        _;
     }
 }
