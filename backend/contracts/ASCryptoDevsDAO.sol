@@ -54,8 +54,10 @@ contract ASCryptoDevsDAO is Ownable {
         mapping(uint256 => bool) voters; // voters - a mapping of CryptoDevsNFT tokenIDs to booleans indicating whether that NFT has already been used to cast a vote or not
     }
 
+    // Create a mapping of ID to Proposal
     mapping(uint256 => Proposal) public proposals;
-    uint256 public proposalCount;
+    // Number of proposals that have been created
+    uint256 public numProposals;
 
     // Create a payable constructor which initializes the contract
     // instances for FakeNFTMarketplace and CryptoDevsNFT
@@ -65,11 +67,27 @@ contract ASCryptoDevsDAO is Ownable {
         cryptoDevsNFT = ICryptoDevsNFT(_cryptoDevsNFT);
     }
 
+    // Create a modifier which only allows a function to be
+    // called by someone who owns at least 1 CryptoDevsNFT
     modifier nftHolderOnly() {
         require(cryptoDevsNFT.balanceOf(msg.sender) > 0, "Not a DAO member");
         _;
     }
 
+    /// @dev createProposal allows a CryptoDevsNFT holder to create a new proposal in the DAO
+    /// _nftTokenId - the tokenID of the NFT to be purchased from FakeNFTMarketplace if this proposal passes
+    /// @return Returns the proposal index for the newly created proposal
+    function createProposal(
+        uint256 _nftTokenId
+    ) external nftHolderOnly returns (uint256) {
+        require(nftMarketplace.available(_nftTokenId), "NFT_NOT_FOR_SALE");
+        Proposal storage proposal = proposals[numProposals];
+        proposal.nftTokenId = _nftTokenId;
+        // Set the proposal's voting deadline to be (current time + 5 minutes)
+        proposal.deadline = block.timestamp + 5 minutes;
 
+        numProposals++;
 
+        return numProposals - 1;
+    }
 }
