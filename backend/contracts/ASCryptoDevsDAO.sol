@@ -163,10 +163,10 @@ contract ASCryptoDevsDAO is Ownable {
         Proposal storage proposal = proposals[proposalIndex];
         // If the proposal has more YAY votes than NAY votes
         // purchase the NFT from the FakeNFTMarketplace
-        if(proposal.yayVotes > proposal.nayVotes) {
+        if (proposal.yayVotes > proposal.nayVotes) {
             uint256 nftPrice = nftMarketplace.getPrice();
             require(address(this).balance >= nftPrice, "Insufficient funds");
-            nftMarketplace.purchase{value:nftPrice} (proposal.nftTokenId);
+            nftMarketplace.purchase{value: nftPrice}(proposal.nftTokenId);
         }
         proposal.executed = true;
     }
@@ -175,11 +175,12 @@ contract ASCryptoDevsDAO is Ownable {
     function withdrawEther() external onlyOwner {
         uint256 amount = address(this).balance;
         require(amount > 0, "Nothing to withdraw; contract balance empty");
+        payable(owner()).transfer(amount);
     }
 
     // The following two functions allow the contract to accept ETH deposits
-// directly from a wallet without calling a function
-receive() external payable {}
-fallback() external payable{}
+    // directly from a wallet without calling a function
+    receive() external payable {}
 
+    fallback() external payable {}
 }

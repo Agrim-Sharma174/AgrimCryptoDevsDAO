@@ -1,39 +1,35 @@
-const hre = require("hardhat");
-
-//* How to change this file
-/*
-- Fill in the `ContractName` with your contract name.
-- Uncomment the verification process if you want to verify your contract but make sure to uncomment the same in the `hardhat.config.js` and change the values as required.
-
-You can pass in values into your contract like doing the following :
-ex : Asssume you have a string and a number to pass
-` const lock = await Lock.deploy("hello", 5);`
-*/
+const { ethers } = require("hardhat");
+const { CRYPTODEVS_NFT_CONTRACT_ADDRESS } = require("../constants");
 
 async function main() {
-  //* Deployment Process
-  const Lock = await hre.ethers.getContractFactory("ContratName");
-  const lock = await Lock.deploy();
+  // Deploy the FakeNFTMarketplace contract first
+  const FakeNFTMarketplace = await ethers.getContractFactory(
+    "FakeNFTMarketplace"
+  );
+  const fakeNftMarketplace = await FakeNFTMarketplace.deploy();
+  await fakeNftMarketplace.deployed();
 
-  await lock.deployed();
+  console.log("FakeNFTMarketplace deployed to: ", fakeNftMarketplace.address);
 
-  console.log("Contract Deployed to : ", lock.address);
+  // Now deploy the CryptoDevsDAO contract
+  const CryptoDevsDAO = await ethers.getContractFactory("ASCryptoDevsDAO");
+  const cryptoDevsDAO = await CryptoDevsDAO.deploy(
+    fakeNftMarketplace.address,
+    CRYPTODEVS_NFT_CONTRACT_ADDRESS,
+    {
+      // This assumes your metamask account has at least 1 ETH in its account
+      // Change this value as you want
+      value: ethers.utils.parseEther("0.1"),
+    }
+  );
+  await cryptoDevsDAO.deployed();
 
-  //* Un-comment this segment for the verification process
-  // console.log("Sleeping...");
-  // await sleep(50000);
-
-  // await hre.run("verify:verify", {
-  //   address: lock.address,
-  //   constructorArguments: [],
-  // });
+  console.log("CryptoDevsDAO deployed to: ", cryptoDevsDAO.address);
 }
-//* Un-comment this segment for the verification process
-// function sleep(ms) {
-//   return new Promise((resolve) => setTimeout(resolve, ms));
-// }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

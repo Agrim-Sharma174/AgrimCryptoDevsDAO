@@ -1,4 +1,4 @@
-//SPDX License-Identifier: MIT
+// SPDX License-Identifier: MIT
 pragma solidity ^0.8.9;
 
 contract FakeNFTMarketplace {
@@ -6,11 +6,11 @@ contract FakeNFTMarketplace {
     mapping(uint256 => address) public tokens;
 
     //See the purchase price of each Fake NFT
-    uint256 nftPrice = 0.1 ether;
+    uint256 nftPrice = 0.01 ether;
 
     //This function accepts ehther and assigns the NFT to the buyer
     function purchase(uint256 _tokenId) external payable {
-        require(msg.value == nftPrice, "Price of NFT is 0.1 ether");
+        require(msg.value == nftPrice, "Price of NFT is 0.01 ether");
         tokens[_tokenId] = msg.sender;
     }
 
