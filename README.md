@@ -1,6 +1,6 @@
 # This is my project title
 
-This sentence describes what my project is about summarized.
+This project is a DAO for Agrim Crypto Devs projects, see those projects in repositories.
 
 ## More Details
 
