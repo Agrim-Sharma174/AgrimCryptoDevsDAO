@@ -18,9 +18,9 @@ WALLET_PRIVATE_KEY="e17ubj82ybe......"
 
 module.exports = {
   solidity: "0.8.9",
-  defaultNetwork: "goerli",
+  defaultNetwork: "sepolia",
   networks: {
-    goerli: {
+    sepolia: {
       url: process.env.QUICKNODE_HTTP_URL,
       accounts: [process.env.PRIVATE_KEY],
     },
